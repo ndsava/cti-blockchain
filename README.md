@@ -1,4 +1,4 @@
-time spent: 42 h (incl. zoom)
+time spent: 57 h (incl. zoom)
 
 # CTI Dissemination Blockchain
 
@@ -30,8 +30,9 @@ Networking (SSH, Flask):
 
 ## How to use the program
 Follow these instructions in order to test/demo the project.
+NOTE: This project has been developed and tested exclusively on Linux machines (Ubuntu and its derivatives). Other platforms are not supported (but may work).
 
-**set up the CA server**
+**set up the CA server**  
 SSH:PublicKeyAuthentication must be turned on and PasswordAuthentication off.
 1. In `/etc/ssh/sshd_config`
   make sure you have
@@ -57,7 +58,7 @@ SSH:PublicKeyAuthentication must be turned on and PasswordAuthentication off.
   - `scp cti-blockchain.pub <SERVER>@<SERVER_IP>:/home/<SERVER>/.ssh/authorized_keys`
 
 
-**Run the server program**
+**Run the server program**  
 Note: Your server machine must have a public IP address to establish the SSH tunnel from client machines.
 1. Clone the server-side code from github.com/ndsava/cti-blockchain/server onto your machine.
 2. Navigate to the project root.
@@ -68,13 +69,13 @@ Note: Your server machine must have a public IP address to establish the SSH tun
 4. Install the project requirements with
   - `pip install -r requirements.txt`.
 5. Run the server CLI program with
-  - `python3 server_cli.py`.
+  - `python3 server_cli.py`.  
   Now you can act as the CA, creating and managing the blockchain.
 
-**Start the Flask API**
+**Start the Flask API**  
 To expose the Flask endpoint to your clients, run `python3 app.py` from the server machine.
 
-**Run the client program**
+**Run the client program**  
 Note: Follow all previous instructions before running the client program.
 1. Clone the client-side code from github.com/ndsava/cti-blockchain/client onto your machine.
 2. Establish the SSH tunnel to the server with
@@ -101,6 +102,8 @@ The clients must request the CA's public RSA key only once to store it locally. 
 The Python ´cryptography´ standard library's Hazmat layer is used to obtain established cryptographic primitives, namely RSA.
 
 **getpass**
+
+**flask**?
 
 
 ### Cryptography
