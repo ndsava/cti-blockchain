@@ -16,7 +16,7 @@ Includes instructions for end nodes on how to connect to the blockchain.
 2. After delivering the SSH key, an end node only needs to input
    `ssh -i ~/.ssh/cti-blockchain <USERNAME>@<SERVER_IP> -N -L 5000:127.0.0.1:5000`
    to access the blockchain.
-   It says: "Whenever I access port 5000 on my computer,
+   The command says: "Whenever I access port 5000 on my computer,
    forward that traffic securely to port 5000 on the CA's computer."
 
 3. Once the SSH tunnel is established, users can request the CA's public key 🔑
@@ -41,7 +41,7 @@ Security architecture:
 Security notes:
     - 🚩 KEY DELIVERY: The initial transfer of the client's SSH public key to the CA
       is manual (email/SCP). In production, this should be automated via a secure
-      registration portal or something similar.
+      registration portal or some other secure system.
     - 🚩 NO MUTUAL TLS: The server does not authenticate the client beyond the SSH
       tunnel. Any user with SSH access can query the blockchain.
 """

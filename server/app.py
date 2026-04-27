@@ -201,7 +201,7 @@ if __name__ == "__main__":
      Launch the Flask development server on localhost:5000.
 
     🚩 Configures the server to bind explicitly to 127.0.0.1 (not 0.0.0.0)
-    for security, ensuring it's only accessible via the SSH tunnel.
+      for security, ensuring it's only accessible via the SSH tunnel.
     🚩 Debug mode is disabled to prevent information leakage.
 
     Security Configuration:

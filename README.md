@@ -33,7 +33,7 @@ Follow these instructions in order to test/demo the project.
 NOTE: This project has been developed and tested exclusively on Linux machines (Ubuntu and its derivatives). Other platforms are not supported (but may work).
 
 **set up the CA server**  
-SSH:PublicKeyAuthentication must be turned on and PasswordAuthentication off.
+SSH: PublicKeyAuthentication must be turned on and PasswordAuthentication off.
 1. In `/etc/ssh/sshd_config`
   make sure you have
   `PubkeyAuthentication yes`

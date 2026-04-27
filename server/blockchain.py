@@ -420,7 +420,8 @@ def init_blockchain_db():
         Prints status messages for each initialization step.
     """
     try:
-        with get_db_conn() as conn:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute("DROP TABLE IF EXISTS Blockchain")
 
