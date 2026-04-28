@@ -6,21 +6,24 @@ blockchain network. It handles secure communication via an SSH tunnel,
 retrieval of the CA's public key, and validation of blockchain integrity.
 Includes instructions for end nodes on how to connect to the blockchain.
 
-1. Authorized nodes generate an SSH key pair🔑
-    - in real life maybe after agreeing with the CA a new client
-        could email (preferably some more secure way)
+1. Authorized nodes generate an SSH key pair 🔑 with
+    - `cd ~/.ssh`
+    - `ssh-keygen -t rsa -b 4096 -f cti-blockchain`
+    - in production maybe after agreeing with the CA a new client
+        could transmit (through email or preferably some more secure way)
         the public SSH key to the CA
     - the key delivery is omitted in this project due to time constraints,
         but is flagged as a critical security consideration
 
 2. After delivering the SSH key, an end node only needs to input
-   `ssh -i ~/.ssh/cti-blockchain <USERNAME>@<SERVER_IP> -N -L 5000:127.0.0.1:5000`
-   to access the blockchain.
-   The command says: "Whenever I access port 5000 on my computer,
-   forward that traffic securely to port 5000 on the CA's computer."
+    `ssh -i ~/.ssh/cti-blockchain <SERVER>@<SERVER_IP> -N -L 5000:127.0.0.1:5000`
+    to access the blockchain.
+    The command says: "Whenever I access port 5000 on my computer,
+    forward that traffic securely to port 5000 on the CA's computer."
 
-3. Once the SSH tunnel is established, users can request the CA's public key 🔑
-    through the '/get_public_key' endpoint.
+3. Once the SSH tunnel is established, users can check the connection
+    through the '/' endpoint with
+    - `curl localhost:5000`
 
 
 Authorized clients can:
@@ -556,8 +559,8 @@ def main():
     """
      Initialize and launch the CTI Blockchain client application.
 
-    Displays welcome instructions for setting up the SSH tunnel and
-    generating SSH keys, then starts the interactive command loop.
+    Displays a welcome screen and automatically
+    starts the interactive command loop.
 
     Args:
         None
@@ -566,7 +569,6 @@ def main():
         None
 
     Note:
-        Prints manual instructions for SSH key generation and tunnel setup.
         Assumes the user has already established the SSH tunnel before running.
         Entry point when script is executed directly.
     """
@@ -574,20 +576,6 @@ def main():
     print("+--------------------------------+")
     print("| WELCOME TO THE CTI-BLOCKCHAIN! |")
     print("+--------------------------------+\n")
-
-    # Client setup instructions
-    print("Please generate an SSH key with")
-    print("`cd ~/.ssh`")
-    print("`ssh-keygen -t rsa -b 4096 -f cti-blockchain`")
-    print("if you haven't already.\n")
-
-    print("Push public SSH key onto server with secure copy")
-    print("`cd ~/.ssh`")
-    print("`scp cti-blockchain.pub <SERVER>@<SERVER_IP>:/home/<SERVER>/.ssh/authorized_keys`\n")
-
-    print("After transmitting cti-blockchain.pub to the server,")
-    print("you may establish the SSH tunnel through port 5000 with")
-    print("`ssh -i ~/.ssh/cti-blockchain <USERNAME>@<SERVER_IP> -N -L 5000:127.0.0.1:5000`\n\n")
 
     cmd_loop()
 

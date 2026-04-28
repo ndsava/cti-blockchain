@@ -1,4 +1,4 @@
-time spent: 57 h (incl. zoom)
+time spent: 60 h (incl. zoom)
 
 # CTI Dissemination Blockchain
 
@@ -49,14 +49,14 @@ SSH: PublicKeyAuthentication must be turned on and PasswordAuthentication off.
 1. The client generates an SSH key pair:
   - `cd ~/.ssh`
   - `ssh-keygen -t rsa -b 4096 -f cti-blockchain`
-2. The public SSH key must be manually copied to `~/.ssh/authorized_keys` on the server machine.
-  On the server machine (if client has a public IP):
-  - `cd ~/.ssh/authorized_keys`
+2. The public SSH key must be manually copied to `~/.ssh/authorized_keys` on the server machine. You may use whatever method to accomplish this. Below is an overview of how I did it. Note that for this method both the remote client and server machines must have public IP addresses.  
+  On my own machine (acting as an intermediary), I pulled the public key from the client to my CWD, then sent it to the server:
   - `scp <USER>@<CLIENT_IP>:/home/<USER>/.ssh/cti-blockchain.pub .`
-  On the client machine (if only server has a public IP):
+  - `scp cti-blockchain.pub <SERVER>@<SERVER_IP>:/home/<SERVER>/.ssh/client_ssh`
+  On the server machine:
   - `cd ~/.ssh`
-  - `scp cti-blockchain.pub <SERVER>@<SERVER_IP>:/home/<SERVER>/.ssh/authorized_keys`
-
+  - `cat client_ssh >> authorized_keys`
+  Make sure the client's key is appended to a new line in authorized_keys.
 
 **Run the server program**  
 Note: Your server machine must have a public IP address to establish the SSH tunnel from client machines.
@@ -77,10 +77,12 @@ To expose the Flask endpoint to your clients, run `python3 app.py` from the serv
 
 **Run the client program**  
 Note: Follow all previous instructions before running the client program.
-1. Clone the client-side code from github.com/ndsava/cti-blockchain/client onto your machine.
+1. Clone the client-side code from github.com/ndsava/cti-blockchain/client onto your machine. 🚧
 2. Establish the SSH tunnel to the server with
   - `ssh -i ~/.ssh/cti-blockchain <USERNAME>@<SERVER_IP> -N -L 5000:127.0.0.1:5000`.
-3. Open a new terminal window and navigate to the project root.
+3. Open a new terminal window and navigate to the project root.  
+  You can test the SSH tunnel connection with
+  - `curl localhost:5000/` (make sure app.py is running on the server).
 4. Create a Python virtual environment with
   - `python3 -m venv .venv`
   and activate it with

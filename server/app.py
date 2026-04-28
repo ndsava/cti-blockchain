@@ -64,7 +64,7 @@ def index():
         Can be tested with `curl http://localhost:5000` from the client machine.
         Useful for diagnosing SSH tunnel or network connectivity issues.
     """
-    return "Welcome to the CTI Blockchain!"
+    return "Welcome to the CTI Blockchain!\n"
 
 
 @app.route('/get_public_key')
