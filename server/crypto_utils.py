@@ -11,12 +11,18 @@ Operations include:
     * Passphrase validation and secure input handling
 
 Cryptographic details:
-    * Algorithm: RSA-4096 with PSS padding and public exponent of 65537
+    * Algorithm: RSA-4096 with public exponent of 65537
     * Hashing: SHA-256 for signatures and key derivation
-    * Key Storage: Private key encrypted with BestAvailableEncryption,
+    * Key Storage: Private key encrypted with
+                    BestAvailableEncryption (password-protected),
                     Public key stored in plaintext (PEM)
-    * Format: PKCS#8 (RFC 5958) for interoperability and standard compliance
-    * Encoding: Base64 for database-friendly signature storage
+    * Key Format: PKCS#8 (RFC 5958) for interoperability and standard compliance
+    * Encoding: Base64 for database-friendly signature storage, PEM for RSA keys
+    * cryptography module: All cryptographic functions are carried out through
+                            the use of Python's `cryptography` module. It's
+                            considered the recommended library for cryptographic
+                            operations and primitives in Python, and is actively
+                            maintained.
 
 Security notes:
     * 🚩 NO KEY ROTATION: Keys are generated once and never rotated.
@@ -38,6 +44,8 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 PRIVATE_KEY_PATH = f'{ROOT}/keys/private_key.pem'
 PUBLIC_KEY_PATH = f'{ROOT}/keys/public_key.pem'
+# ☢️ Define repeated printout as a constant
+ABORT_MSG = "Aborting...\n"
 
 
 def sign_block(current_hash: str) -> str | None:
@@ -76,18 +84,19 @@ def sign_block(current_hash: str) -> str | None:
 
         if private_key is None:
             print("Failed to load private key. Cannot sign block.")
-            print("Aborting...\n")
+            print(ABORT_MSG)
             return None
 
-        print("Signing block...")
+        print("* Signing block...")
         # CA signs the current_hash with its private key
         # 🚩 Using library function with secure defaults
         signature = private_key.sign(
             bytes.fromhex(current_hash),
             padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH),
-            # current_hash is already hashed
+                mgf=padding.MGF1(hashes.SHA256()), # MGF1 as Mask
+                                                   # Generation Function
+                salt_length=padding.PSS.MAX_LENGTH), # Max salt length
+            # current_hash is already hashed with SHA-256
             utils.Prehashed(hashes.SHA256())
         )
         # Encode raw bytes to Base64 for db storage
@@ -96,11 +105,11 @@ def sign_block(current_hash: str) -> str | None:
 
     except ValueError as e:
         print("Error signing block: ", e)
-        print("Aborting...\n")
+        print(ABORT_MSG)
         return None
     except Exception as e:
         print("Unexpected error: ", e)
-        print("Aborting...\n")
+        print(ABORT_MSG)
         return None
 
 
@@ -213,7 +222,7 @@ def create_password() -> bytes | None:
     print("- 8 characters")
     print("- 1 upper case letter")
     print("- 1 digit\n")
-    print("WARNING: You must remember this passphrase or store it securely.\n")
+    print("❗️ WARNING: You must remember this passphrase or store it securely.\n")
     try:
         counter = 3
         while counter > 0:
@@ -226,16 +235,16 @@ def create_password() -> bytes | None:
             counter -= 1
 
         print("\nNo valid passphrase provided.")
-        print("Aborting...\n")
+        print(ABORT_MSG)
         return None
 
     except EOFError as e:
         print("\nError: ", e)
-        print("Aborting...\n")
+        print(ABORT_MSG)
         return None
     except getpass.GetPassWarning as e:
         print("\nError: ", e)
-        print("Aborting...\n")
+        print(ABORT_MSG)
         return None
 
 
@@ -270,6 +279,8 @@ def load_private_key(private_key_path: str) -> rsa.RSAPrivateKey | None:
     """
     try:
         # Only 1 chance to input the correct private key passphrase
+        # 🚩 A way of rate limiting, although it doesn't
+        # *block* consecutive attempts
         password = getpass.getpass("Enter passphrase for your private key: "
                     ).encode('utf-8')
         with open(private_key_path, 'rb') as f:
@@ -281,13 +292,13 @@ def load_private_key(private_key_path: str) -> rsa.RSAPrivateKey | None:
 
         # Make sure loaded key is RSA
         if not isinstance(private_key, rsa.RSAPrivateKey):
-            raise ValueError("Loaded key is not an RSA private key.\nAborting...\n")
+            raise ValueError(f"Loaded key is not an RSA private key.\n{ABORT_MSG}")
 
         return private_key
 
     except FileNotFoundError:
         print("Error: Cannot find private key file.")
-        print("Aborting...\n")
+        print(ABORT_MSG)
         return None
     except ValueError as e:
         print("Error loading private key: ", e)
@@ -318,8 +329,8 @@ def generate_keys():
 
     Note:
         🚩 SECURITY LIMITATION: These keys are never rotated.
-            Loss or compromise of this key invalidates
-            the entire blockchain's trust model.
+            Loss or compromise of this key (incl. passphrase)
+            invalidates the entire blockchain's trust model.
 
         - Key Size: 4096 bits (resistant to classical and near-term quantum attacks)
         - Format: PKCS#8 (RFC 5958) for the private key
@@ -327,8 +338,6 @@ def generate_keys():
 
         Requires a valid passphrase via create_password().
         Aborts if the user fails to provide a strong passphrase.
-
-        🚧 Is it a concern that the private file stays in memory until (GC)?
     """
     try:
         # Generate private RSA key

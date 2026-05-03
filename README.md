@@ -1,4 +1,4 @@
-time spent: 60 h (incl. zoom)
+time spent: 69 h (incl. zoom)
 
 # CTI Dissemination Blockchain
 
@@ -32,20 +32,22 @@ Networking (SSH, Flask):
 Follow these instructions in order to test/demo the project.
 NOTE: This project has been developed and tested exclusively on Linux machines (Ubuntu and its derivatives). Other platforms are not supported (but may work).
 
-**set up the CA server**  
-SSH: PublicKeyAuthentication must be turned on and PasswordAuthentication off.
+**Set up the CA server**  
+**SSH config**  
+PublicKeyAuthentication must be turned on while PasswordAuthentication must be turned off. For added security it is advisable to turn PermitRootLogin off.
 1. In `/etc/ssh/sshd_config`
   make sure you have
-  `PubkeyAuthentication yes`
-  `PasswordAuthentication no`.
-2. Restart SSH with
-  `sudo systemctl restart ssh`.
-3. Ensure ~/.ssh/authorized_keys exists on the server machine
-  `mkdir ~/.ssh/authorized_keys`.
+  - `PubkeyAuthentication yes`
+  - `PasswordAuthentication no`
+  - `PermitRootLogin no` (optional).
+2. Restart SSH with  
+  - `sudo systemctl restart ssh`.
+3. Ensure ~/.ssh/authorized_keys exists on the server machine  
+  - `mkdir ~/.ssh/authorized_keys`.
 3. Ensure correct permissions with
-  `chmod 600 ~/.ssh/authorized_keys`.
+  - `chmod 600 ~/.ssh/authorized_keys`.
 
-**add new client**
+**Add new client**
 1. The client generates an SSH key pair:
   - `cd ~/.ssh`
   - `ssh-keygen -t rsa -b 4096 -f cti-blockchain`
@@ -69,28 +71,31 @@ Note: Your server machine must have a public IP address to establish the SSH tun
 4. Install the project requirements with
   - `pip install -r requirements.txt`.
 5. Run the server CLI program with
-  - `python3 server_cli.py`.  
+  - `python3 server/server_cli.py`.  
   Now you can act as the CA, creating and managing the blockchain.
 
 **Start the Flask API**  
-To expose the Flask endpoint to your clients, run `python3 app.py` from the server machine.
+1. On the server machine, navigate to the project root and activate your virtual environment
+  - `source .venv/bin/activate`.
+2. To expose the Flask endpoint to your clients, run
+  - `python3 server/app.py`.
 
 **Run the client program**  
-Note: Follow all previous instructions before running the client program.
-1. Clone the client-side code from github.com/ndsava/cti-blockchain/client onto your machine. 🚧
-2. Establish the SSH tunnel to the server with
+Note: Follow all previous instructions before running the client program.  
+On the client machine
+1. Establish the SSH tunnel to the server with
   - `ssh -i ~/.ssh/cti-blockchain <USERNAME>@<SERVER_IP> -N -L 5000:127.0.0.1:5000`.
-3. Open a new terminal window and navigate to the project root.  
+2. Open a new terminal window and navigate to the project root.  
   You can test the SSH tunnel connection with
   - `curl localhost:5000/` (make sure app.py is running on the server).
-4. Create a Python virtual environment with
+3. Create a Python virtual environment with
   - `python3 -m venv .venv`
   and activate it with
   - `source .venv/bin/activate`.
-5. Install the project requirements with
+4. Install the project requirements with
   - `pip install -r requirements.txt`.
-6. Run the client CLI program with
-  - `python3 client.py`.
+5. Run the client CLI program with
+  - `python3 client/client.py`.
 
 
 ## Security decisions & considerations (WIP)

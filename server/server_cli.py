@@ -48,6 +48,8 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 KEYS_DIR = f"{ROOT}/keys"
 DB_DIR = f"{ROOT}/db"
+# ☢️ Define repeated printout as a constant
+ABORT_MSG = "Aborting...\n"
 
 
 def sanitize_payload(payload: str) -> list[str]:
@@ -69,7 +71,7 @@ def sanitize_payload(payload: str) -> list[str]:
     """
     if payload.strip() == "":
         print("No payload provided.")
-        print("Aborting...\n")
+        print(ABORT_MSG)
         return []
 
     split_payload = payload.split()
@@ -77,7 +79,7 @@ def sanitize_payload(payload: str) -> list[str]:
     for ip in split_payload:
         if not is_valid_ipv4(ip):
             print(f"Invalid IPv4 address: {ip}.")
-            print("Aborting...\n")
+            print(ABORT_MSG)
             return []
     return split_payload
 
@@ -113,13 +115,190 @@ def is_valid_ipv4(ip: str) -> bool:
         return False
 
 
+def _check_prerequisites(keys_check=True, db_check=True) -> bool:
+    """
+     Verify that required resources (RSA keys, database) exist before operations.
+
+    Checks for the existence of cryptographic key files and/or the blockchain
+    database file, depending on the flags provided. Prints user-friendly error
+    messages if prerequisites are missing.
+
+    Args:
+        keys_check (bool): Whether to verify RSA key existence (default: True).
+        db_check (bool): Whether to verify database file existence (default: True).
+
+    Returns:
+        bool: True if all requested prerequisites exist, False otherwise.
+
+    Note:
+        Prints specific error messages for each missing prerequisite.
+        Returns False immediately upon first failure (short-circuit evaluation).
+        Used by CLI command handlers to prevent operations on invalid state.
+        Private function (prefixed with _) as it's only used internally.
+    """
+    if keys_check:
+        # Check if RSA key pair exists
+        if not crypto.keys_exist():
+            print("Cannot find public nor/or private key.")
+            print("Please generate them with 'keys' and try again.\n")
+            return False
+    if db_check:
+        # Check if db file exists
+        if not os.path.exists(DB_PATH):
+            print(f"Database file not found in `{DB_PATH}`.")
+            print("Please initialize the database with 'init' and try again.\n")
+            return False
+    return True
+
+
+def print_help_screen():
+    """
+     Display the list of available CLI commands and their descriptions.
+
+    Prints a formatted help menu to the console detailing all valid commands
+    for the CA operator, including 'keys', 'init', 'add', 'pull', 'validate',
+    and 'exit'.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Note:
+        The output is static and does not reflect dynamic system state.
+    """
+    print('''Provide one of the following commands to choose what to do.
+        'help'     to show all commands.
+        'keys'     to (re)generate cryptographic keys.
+        'init'     to (re)initialize the blockchain.
+        'pull new' to read the latest block.
+        'pull all' to read all blocks.
+        'add'      to add a new block.
+        'validate' to validate integrity of the blockchain.
+        'exit'     to quit the program.
+
+    ''')
+
+
+def generate_rsa_key_pair():
+    """
+     Handle the generation and regeneration of the CA's RSA key pair.
+
+    Prompts the user for confirmation before overwriting existing keys,
+    deletes old keys if confirmed, and generates a new 4096-bit RSA pair.
+    This is a destructive operation that invalidates any blockchain data
+    signed by the previous keys.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Note:
+        ⚠️ Destructive: Overwriting keys breaks the trust chain for all
+           previously signed blocks. The blockchain will need re-initialization.
+        Creates the 'keys/' directory if it does not exist.
+        Aborts silently if the user declines the confirmation prompt.
+    """
+    print("❗️ WARNING: Generating the RSA key pair will overwrite any existing keys in `keys/`.")
+    print("Overwriting existing keys will render any blockchain database that uses them broken.\n")
+    confirmation = input("Are you sure you want to regenarate the RSA key pair? [y/n]: ")
+    print()
+    if confirmation == 'y' or confirmation == 'yes':
+        # Create /keys if it doesn't exist
+        os.makedirs(KEYS_DIR, exist_ok=True)
+        print("Deleting any existing keys...")
+        # Overwrite any existing keys
+        # ❗️ WARNING: irreversible operation - potential for data loss
+        crypto.delete_keys()
+        print("Generating a new key pair...\n")
+        crypto.generate_keys()
+    else:
+        print(ABORT_MSG)
+
+
+def initialize_blockchain():
+    """
+     Handle the initialization or re-initialization of the blockchain database.
+
+    Prompts the user for confirmation, verifies the existence of cryptographic
+    keys, creates the database directory if needed, and calls the core
+    initialization function to create the genesis block.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Note:
+        ⚠️ Destructive: Re-initializing drops the existing 'Blockchain' table,
+           permanently deleting all historical blocks.
+        Prerequisite: RSA keys must exist; otherwise, the operation aborts.
+        Aborts silently if the user declines the confirmation prompt.
+    """
+    print(f"❗️ WARNING: Initializing the blockchain overrides any existing databases in `{DB_PATH}`.\n")
+    print(f"Make sure cryptographic keys `{PRIVATE_KEY_PATH}` and `{PUBLIC_KEY_PATH}` exist.\n")
+    confirmation = input("Are you sure you want to continue? [y/n]: ")
+    if confirmation == 'y' or confirmation == "yes":
+        print()
+        # Make sure the RSA key pair exists
+        if not _check_prerequisites(True, False):
+            return
+        print("* Initializing the blockchain database...")
+        # Create /db if it doesn't exist
+        os.makedirs(DB_DIR, exist_ok=True)
+        blockchain.init_blockchain_db()
+    else:
+        print(ABORT_MSG)
+
+
+def add_new_block():
+    """
+     Handle the creation and signing of a new blockchain block.
+
+    Validates prerequisites (keys and database existence), prompts the user
+    for a payload of IPv4 addresses, sanitizes the input, and adds the
+    validated payload as a new block to the chain.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Note:
+        Prerequisites:
+            - RSA keys must exist.
+            - Database must be initialized.
+        Input Validation:
+            - Payload is validated via `sanitize_payload()`.
+            - Empty or invalid payloads abort the operation.
+        The new block is signed by the CA's private key before insertion.
+    """
+    # Make sure the keys and db file exist
+    if not _check_prerequisites():
+        return
+
+    payload = input("Please provide a list of IPv4 addresses separated by whitespaces: ")
+    sanitized_payload = sanitize_payload(payload)
+    if not sanitized_payload:
+        print("Please make sure you provide one or more IPv4 addresses in the correct format, e.g.")
+        print("9.9.9.9 127.0.0.1\n")
+        return
+    blockchain.add_block(sanitized_payload)
+
+
 def cmd_loop():
     """
      Run the interactive CLI command loop for blockchain management.
 
     Presents a menu-driven interface allowing the CA operator to perform
     blockchain operations including initialization, block addition, retrieval,
-    validation, and key management.
+    validation (🚧), and key management. Delegates operations to private helper
+    functions for better code organization.
 
     Args:
         None
@@ -131,6 +310,8 @@ def cmd_loop():
         Runs indefinitely until the user selects 'exit'.
         Commands are matched via Python 3.10+ structural pattern matching.
         Prompts for confirmation on destructive operations (init, keys).
+        Validates prerequisites before read/write operations.
+        ☢️ Separate helper functions encapsulate command logic.
     """
     while True:
         # Print info screen
@@ -143,94 +324,33 @@ def cmd_loop():
         print()
         match option:
             case 'help':
-                print('''Provide one of the following commands to choose what to do.
-                'help'     to show all commands.
-                'keys'     to (re)generate cryptographic keys.
-                'init'     to (re)initialize the blockchain.
-                'pull new' to read the latest block.
-                'pull all' to read all blocks.
-                'add'      to add a new block.
-                'validate' to validate integrity of the blockchain.
-                'exit'     to quit the program.
-
-                ''')
-
-
+                print_help_screen()
             case 'keys':
-                print("WARNING: Generating the RSA key pair will overwrite any existing keys in `keys/`.")
-                print("Overwriting existing keys will render any blockchain database that uses them broken.")
-                confirmation = input("Are you sure you want to regenarate the RSA key pair? [y/n]: ")
-                print()
-                if confirmation == 'y' or confirmation == 'yes':
-                    os.makedirs(KEYS_DIR, exist_ok=True)
-                    print("Deleting any existing keys...")
-                    # Overwrite any existing keys
-                    # WARNING: irreversible operation - potential for data loss
-                    crypto.delete_keys()
-                    print("Generating a new key pair...\n")
-                    crypto.generate_keys()
-                else:
-                    print("Aborting...\n")
-
-
+                generate_rsa_key_pair()
             case 'init':
-                print(f"WARNING: Initializing the blockchain overrides any existing databases in `{DB_PATH}`.")
-                print(f"Make sure cryptographic keys `{PRIVATE_KEY_PATH}` and `{PUBLIC_KEY_PATH}` exist.")
-                confirmation = input("Are you sure you want to continue? [y/n]: ")
-                if confirmation == 'y' or confirmation == "yes":
-                    print()
-                    if not crypto.keys_exist():
-                        print("Cannot find public nor/or private key. Please generate them with 'keys' and try again.\n")
-                        continue
-                    print("Initializing the blockchain database...")
-                    os.makedirs(DB_DIR, exist_ok=True)
-                    blockchain.init_blockchain_db()
-                else:
-                    print("Aborting...\n")
-
-
+                initialize_blockchain()
             case 'add':
-                if not crypto.keys_exist():
-                    print("Cannot find public nor/or private key. Please generate them with 'keys' and try again.\n")
-                    continue
-                if not os.path.exists(DB_PATH):
-                    print(f"Database file not found in `{DB_PATH}`. Please initialize the database with 'init' and try again.\n")
-                    continue
-
-                payload = input("Please provide a list of IPv4 addresses separated by whitespaces: ")
-                sanitized_payload = sanitize_payload(payload)
-                if not sanitized_payload:
-                    print("Please make sure you provide one or more IPv4 addresses in the correct format, e.g.")
-                    print("9.9.9.9 127.0.0.1\n")
-                    continue
-                blockchain.add_block(sanitized_payload)
-
+                add_new_block()
 
             case 'pull new':
                 # Make sure the database exists
-                if not os.path.exists(DB_PATH):
-                    print(f"Database file not found in `{DB_PATH}`. Please initialize the database with 'init' and try again.\n")
+                if not _check_prerequisites(False, True):
                     continue
                 blockchain.print_latest()
 
-
             case 'pull all':
                 # Make sure the database exists
-                if not os.path.exists(DB_PATH):
-                    print(f"Database file not found in `{DB_PATH}`. Please initialize the database with 'init' and try again.\n")
+                if not _check_prerequisites(False, True):
                     continue
                 blockchain.print_all()
-
 
             case 'validate':
                 # 🚧 TODO 🚧
                 continue
 
-
             case 'exit':
                 print("Bye!")
                 return
-
             case _:
                 print("Unknown command.\n")
                 print("Make sure you enter commands without apostrophes")
@@ -267,7 +387,7 @@ def main():
     # Warn about missing RSA keys
     if not crypto.keys_exist():
         print(f"Cannot find `{PUBLIC_KEY_PATH}` nor/or `{PRIVATE_KEY_PATH}`.")
-        print("Please make sure they exist before commencing database operations.\n")
+        print("Please make you generate an RSA key pair with `keys` before commencing database operations.\n")
 
     cmd_loop()
 

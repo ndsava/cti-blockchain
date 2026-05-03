@@ -44,6 +44,8 @@ app = Flask(__name__)
 
 HOST_IP = '127.0.0.1'
 HOST_PORT = 5000
+# ☢️ Define repeated error message as a constant
+INTERNAL_SERVER_ERROR_MSG = "Internal server error."
 
 
 @app.route("/")
@@ -138,13 +140,13 @@ def read_all():
             "status": "error",
             # 🚩 Only send generic error message to clients
             # to avoid leaking internal architectural details
-            "message": "Internal server error."
+            "message": INTERNAL_SERVER_ERROR_MSG
         }), 500
     except Exception as e:
         print("❌ Server error ❌\n", e)
         return jsonify({
             "status": "error",
-            "message": "Internal server error."
+            "message": INTERNAL_SERVER_ERROR_MSG
         }), 500
 
 
@@ -186,13 +188,13 @@ def read_latest():
         print("❌ SQLite error ❌\n", e)
         return jsonify({
             "status": "error",
-            "message": "Internal server error."
+            "message": INTERNAL_SERVER_ERROR_MSG
         }), 500
     except Exception as e:
         print("❌ Server error ❌\n", e)
         return jsonify({
             "status": "error",
-            "message": "Internal server error."
+            "message": INTERNAL_SERVER_ERROR_MSG
         }), 500
 
 

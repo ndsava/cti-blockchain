@@ -60,6 +60,8 @@ import os
 SERVER_ADDRESS = 'http://127.0.0.1:5000'
 ROOT = Path(__file__).parent
 PUBLIC_KEY_FILE = f"{ROOT}/ca_public_key.pem"
+# ☢️ Define repeated printout as a constant
+ABORT_MSG = "Aborting...\n"
 
 
 def get_public_key() -> bool:
@@ -128,21 +130,21 @@ def load_public_key() -> rsa.RSAPublicKey | None:
             public_key = serialization.load_pem_public_key(f.read())
     except FileNotFoundError:
         print("Error: Cannot find public key file.")
-        print("Aborting...\n")
+        print(ABORT_MSG)
         return None
     except ValueError as e:
         print("Error loading public key: ", e)
-        print("Aborting...\n")
+        print(ABORT_MSG)
         return None
     except Exception as e:
         print("Failed to load public key: ", e)
-        print("Aborting...\n")
+        print(ABORT_MSG)
         return None
 
     # Make sure loaded key is RSA
     if not isinstance(public_key, rsa.RSAPublicKey):
         print("Loaded key is not an RSA public key.")
-        print("Aborting...\n")
+        print(ABORT_MSG)
         return None
 
     return public_key
@@ -308,7 +310,7 @@ def validate_latest():
         return
 
     # Extract block id, signature and hash
-    id = block.get('id')
+    block_id = block.get('id')  # ☢️ Avoid built-in variable name
     signature_b64 = block.get('signature')
     hash_hex = block.get('current_hash')
 
@@ -323,12 +325,12 @@ def validate_latest():
     result = verify_signature(public_key, signature_bytes, hash_bytes)
     if result == 0: # Invalid signature
         print(f"\n❌ WARNING: Signature of block #{id} is invalid. ❌\n\n")
-        return
+        # ☢️ No return statement needed
     elif result == -1:  # Error
-        print("Aborting...\n\n")
-        return
+        print(f"{ABORT_MSG}\n")
+        # ☢️ No return statement needed
     else:
-        print(f"✅ Signature of block #{id} is valid. ✅\n\n")
+        print(f"✅ Signature of block #{block_id} is valid. ✅\n\n")
 
 
 def validate_all():
@@ -367,23 +369,23 @@ def validate_all():
     # Validate each block starting from the genesis block
     for block in blocks:
         block_copy = block.copy() # Copy block to avoid modifying the original data
-        id = block_copy.get('id')
+        block_id = block_copy.get('id') # ☢️ Avoid built-in variable name
         previous_hash_hex = block_copy.get('previous_hash')
         signature_b64 = block_copy.get('signature')
         hash_hex = block_copy.get('current_hash')
 
         # Sanity check that all keys exist
         if not previous_hash_hex or not signature_b64 or not hash_hex:
-            print(f"❌ Error: Missing key in block #{id} ❌\n\n")
-            print("Aborting validation process...\n\n")
+            print(f"❌ Error: Missing key in block #{block_id} ❌\n\n")
+            print(f"{ABORT_MSG}\n")
             return
 
         previous_hash = bytes.fromhex(previous_hash_hex) # Decode to bytes
 
         # Check hash validity
         if previous_hash != previous_hash_predecessor:
-            print(f"❌ WARNING: Broken hash link detected in block #{id} ❌\n\n")
-            print("Aborting validation process...\n\n")
+            print(f"❌ WARNING: Broken hash link detected in block #{block_id} ❌\n\n")
+            print(f"{ABORT_MSG}\n")
             return
 
         # Decode signature (from base64) and hash (from hexadecimal) to bytes
@@ -396,12 +398,12 @@ def validate_all():
         # Stop the process if an invalid signature is found
         if result == 0:
             print(f"\n❌ WARNING: Signature of block #{id} is invalid. ❌")
-            print("Aborting validation process...\n\n")
+            print(f"{ABORT_MSG}\n")
             return
         # Stop the process if signature cannot be verified
         elif result == -1:
             print(f"\nError occurred at block index #{id}.")
-            print("Aborting validation process...\n\n")
+            print(f"{ABORT_MSG}\n")
             return
         else:
             print(f"✅ Signature of block #{id} is valid. ✅")

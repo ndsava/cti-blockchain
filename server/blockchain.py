@@ -333,13 +333,13 @@ def add_block(payload: list[str]):
         print("\nPlease initialize the blockchain with a genesis block and try again.\n")
         return
 
-    id = previous_block['id'] + 1
+    block_id = previous_block['id'] + 1 # ☢️ Avoid built-in variable name
     # 🚩 datetime.datetime should not have security implications
     # since it's not used to create security-critical randomness
     timestamp = str(datetime.datetime.now())
     previous_hash = previous_block['current_hash']
     payload_hash = construct_payload_hash(payload)
-    current_hash = construct_current_hash(id, timestamp, previous_hash, payload_hash)
+    current_hash = construct_current_hash(block_id, timestamp, previous_hash, payload_hash)
     payload_json = json.dumps(payload)
     signature = crypto.sign_block(current_hash)
     if signature is None:
@@ -353,7 +353,7 @@ def add_block(payload: list[str]):
             cursor.execute('''
                 INSERT INTO Blockchain (id, timestamp, previous_hash, payload_hash, current_hash, payload, signature)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (id, timestamp, previous_hash, payload_hash, current_hash, payload_json, signature))
+            ''', (block_id, timestamp, previous_hash, payload_hash, current_hash, payload_json, signature))
 
             print("✅ New block appended.\n")
     except sqlite3.Error as e:
@@ -378,7 +378,7 @@ def generate_genesis_block(cursor: sqlite3.Cursor):
         Previous hash is set to 64 zeros ('0'*64) as there is no predecessor.
         Payload is an empty list for the genesis block.
     """
-    id = 0
+    block_id = 0    # ☢️ Avoid built-in variable name
     # 🚩 datetime.datetime should not have security implications
     # since it's not used to create security-critical randomness
     timestamp = str(datetime.datetime.now())
@@ -386,7 +386,7 @@ def generate_genesis_block(cursor: sqlite3.Cursor):
 
     payload      = []
     payload_hash = construct_payload_hash(payload)
-    current_hash = construct_current_hash(id, timestamp, previous_hash, payload_hash)
+    current_hash = construct_current_hash(block_id, timestamp, previous_hash, payload_hash)
     signature    = crypto.sign_block(current_hash)
 
     # Convert payload list to a json string for db storage
@@ -397,7 +397,7 @@ def generate_genesis_block(cursor: sqlite3.Cursor):
     cursor.execute('''
         INSERT INTO Blockchain (id, timestamp, previous_hash, payload_hash, current_hash, payload, signature)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (id, timestamp, previous_hash, payload_hash, current_hash, payload_json, signature))
+    ''', (block_id, timestamp, previous_hash, payload_hash, current_hash, payload_json, signature))
 
 
 def init_blockchain_db():
@@ -437,9 +437,9 @@ def init_blockchain_db():
                     signature TEXT
                 )
                 ''')
-            print("Blockchain database initialized.\n")
+            print("✅ Blockchain database initialized.\n")
 
-            print("Generating genesis block...")
+            print("* Generating genesis block...")
             generate_genesis_block(cursor)
             print("✅ Genesis block created and appended.\n")
 
