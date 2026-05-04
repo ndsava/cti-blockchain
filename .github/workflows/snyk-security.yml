@@ -26,6 +26,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   snyk:
@@ -38,14 +39,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Snyk CLI
+      - name: Set up Snyk CLI
         uses: snyk/actions/setup@master
 
+      # =========================
+      # Install dependencies
+      # =========================
+
       - name: Install server deps
-        run: pip install -r server/requirements.txt
+        working-directory: server
+        run: pip install -r requirements.txt
 
       - name: Install client deps
-        run: pip install -r client/requirements.txt
+        working-directory: client
+        run: pip install -r requirements.txt
+
+      # =========================
+      # Open Source monitoring (uploads to Snyk dashboard)
+      # =========================
 
       - name: Snyk monitor server
         working-directory: server
@@ -55,20 +66,14 @@ jobs:
         working-directory: client
         run: snyk monitor
 
-        # Runs Snyk Infrastructure as Code (IaC) analysis and uploads result to Snyk.
-        # Use || true to not fail the pipeline.
-      #- name: Snyk IaC test and report
-        #run: snyk iac test --report # || true
+      # =========================
+      # Code scanning (SARIF -> GitHub Security tab)
+      # =========================
 
-        # Build the docker image for testing
-      #- name: Build a Docker image
-        #run: docker build -t your/image-to-test .
-        # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
-      #- name: Snyk Container monitor
-        #run: snyk container monitor your/image-to-test --file=Dockerfile
+      - name: Run Snyk Code (SAST)
+        run: snyk code test --sarif > snyk-code.sarif || true
 
-        # Push the Snyk Code results into GitHub Code Scanning tab
-      #- name: Upload result to GitHub Code Scanning
-        #uses: github/codeql-action/upload-sarif@v3
-        #with:
-          #sarif_file: snyk-code.sarif
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-code.sarif
