@@ -60,8 +60,21 @@ jobs:
         #run: snyk code test --sarif > snyk-code.sarif # || true
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
-      - name: Snyk Open Source monitor
-        run: snyk monitor --all-projects
+      #- name: Snyk Open Source monitor
+        #run: snyk monitor --all-projects
+      - name: Install server deps
+        run: pip install -r project/server/requirements.txt
+      
+      - name: Install client deps
+        run: pip install -r project/client/requirements.txt
+        
+      - name: Snyk monitor server
+        working-directory: project/server
+        run: snyk monitor
+
+      - name: Snyk monitor client
+        working-directory: project/client
+        run: snyk monitor
 
         # Runs Snyk Infrastructure as Code (IaC) analysis and uploads result to Snyk.
         # Use || true to not fail the pipeline.
