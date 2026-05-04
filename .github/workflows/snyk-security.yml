@@ -76,7 +76,7 @@ jobs:
         #run: snyk container monitor your/image-to-test --file=Dockerfile
 
         # Push the Snyk Code results into GitHub Code Scanning tab
-      - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: snyk-code.sarif
+      #- name: Upload result to GitHub Code Scanning
+        #uses: github/codeql-action/upload-sarif@v3
+        #with:
+          #sarif_file: snyk-code.sarif
