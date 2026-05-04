@@ -20,7 +20,7 @@ name: Snyk Security
 
 on:
   push:
-    branches: ["main" ]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -29,51 +29,30 @@ permissions:
 
 jobs:
   snyk:
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     runs-on: ubuntu-latest
+
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       SNYK_ORG: 3b0bcfdc-20d8-4860-92e4-99990503f55b
+
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Snyk CLI to check for security issues
-        # Snyk can be used to break the build when it detects security issues.
-        # In this case we want to upload the SAST issues to GitHub Code Scanning
-        uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
 
-        # For Snyk Open Source you must first set up the development environment for your application's dependencies
-        # For example for Node
-        #- uses: actions/setup-node@v4
-        #  with:
-        #    node-version: 20
+      - name: Setup Snyk CLI
+        uses: snyk/actions/setup@master
 
-        #env:
-          # This is where you will need to introduce the Snyk API token created with your Snyk account
-          #SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-        # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
-        # Use || true to not fail the pipeline
-      #- name: Snyk Code test
-        #run: snyk code test --sarif > snyk-code.sarif # || true
-
-        # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
-      #- name: Snyk Open Source monitor
-        #run: snyk monitor --all-projects
       - name: Install server deps
-        run: pip install -r project/server/requirements.txt
-      
+        run: pip install -r cti-blockchain/server/requirements.txt
+
       - name: Install client deps
-        run: pip install -r project/client/requirements.txt
-        
+        run: pip install -r cti-blockchain/client/requirements.txt
+
       - name: Snyk monitor server
-        working-directory: project/server
+        working-directory: cti-blockchain/server
         run: snyk monitor
 
       - name: Snyk monitor client
-        working-directory: project/client
+        working-directory: cti-blockchain/client
         run: snyk monitor
 
         # Runs Snyk Infrastructure as Code (IaC) analysis and uploads result to Snyk.
