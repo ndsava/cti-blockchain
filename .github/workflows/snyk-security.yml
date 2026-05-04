@@ -42,17 +42,17 @@ jobs:
         uses: snyk/actions/setup@master
 
       - name: Install server deps
-        run: pip install -r cti-blockchain/server/requirements.txt
+        run: pip install -r server/requirements.txt
 
       - name: Install client deps
-        run: pip install -r cti-blockchain/client/requirements.txt
+        run: pip install -r client/requirements.txt
 
       - name: Snyk monitor server
-        working-directory: cti-blockchain/server
+        working-directory: server
         run: snyk monitor
 
       - name: Snyk monitor client
-        working-directory: cti-blockchain/client
+        working-directory: client
         run: snyk monitor
 
         # Runs Snyk Infrastructure as Code (IaC) analysis and uploads result to Snyk.
