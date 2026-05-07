@@ -34,7 +34,6 @@ jobs:
 
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      SNYK_ORG: 3b0bcfdc-20d8-4860-92e4-99990503f55b
 
     steps:
       - uses: actions/checkout@v4
