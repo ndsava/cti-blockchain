@@ -175,7 +175,7 @@ def print_help_screen():
         'pull new' to read the latest block.
         'pull all' to read all blocks.
         'add'      to add a new block.
-        'validate' to validate integrity of the blockchain.
+        'validate' to validate integrity of the blockchain. (WIP)
         'exit'     to quit the program.
 
     ''')
@@ -346,6 +346,7 @@ def cmd_loop():
 
             case 'validate':
                 # 🚧 TODO 🚧
+                print("🚧 WIP 🚧\n")
                 continue
 
             case 'exit':
