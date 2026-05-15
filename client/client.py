@@ -324,13 +324,13 @@ def validate_latest():
 
     result = verify_signature(public_key, signature_bytes, hash_bytes)
     if result == 0: # Invalid signature
-        print(f"\n❌ WARNING: Signature of block #{id} is invalid. ❌\n\n")
+        print(f"\n❌ WARNING: Signature of block #{block_id} is invalid.\n\n")
         # ☢️ No return statement needed
     elif result == -1:  # Error
         print(f"{ABORT_MSG}\n")
         # ☢️ No return statement needed
     else:
-        print(f"✅ Signature of block #{block_id} is valid. ✅\n\n")
+        print(f"✅ Signature of block #{block_id} is valid.\n\n")
 
 
 def validate_all():
@@ -376,7 +376,7 @@ def validate_all():
 
         # Sanity check that all keys exist
         if not previous_hash_hex or not signature_b64 or not hash_hex:
-            print(f"❌ Error: Missing key in block #{block_id} ❌\n\n")
+            print(f"Error: Missing key in block #{block_id}\n\n")
             print(f"{ABORT_MSG}\n")
             return
 
@@ -384,7 +384,7 @@ def validate_all():
 
         # Check hash validity
         if previous_hash != previous_hash_predecessor:
-            print(f"❌ WARNING: Broken hash link detected in block #{block_id} ❌\n\n")
+            print(f"❌ WARNING: Broken hash link detected in block #{block_id}\n\n")
             print(f"{ABORT_MSG}\n")
             return
 
@@ -397,20 +397,20 @@ def validate_all():
 
         # Stop the process if an invalid signature is found
         if result == 0:
-            print(f"\n❌ WARNING: Signature of block #{id} is invalid. ❌")
+            print(f"\n❌ WARNING: Signature of block #{block_id} is invalid.")
             print(f"{ABORT_MSG}\n")
             return
         # Stop the process if signature cannot be verified
         elif result == -1:
-            print(f"\nError occurred at block index #{id}.")
+            print(f"\nError occurred at block index #{block_id}.")
             print(f"{ABORT_MSG}\n")
             return
         else:
-            print(f"✅ Signature of block #{id} is valid. ✅")
+            print(f"✅ Signature of block #{block_id} is valid.")
 
         previous_hash_predecessor = current_hash
 
-    print("\n✅ The hash chain appears intact. ✅\n\n")
+    print("\n✅ The hash chain appears intact.\n\n")
 
 
 def print_latest():
