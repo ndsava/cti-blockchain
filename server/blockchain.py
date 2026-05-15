@@ -20,8 +20,6 @@ Security notes
     * All hash computations use SHA-256 for collision resistance
     * Timestamps are stored as ISO-format strings for consistency
     * Payload data is JSON-serialized before hashing and storage
-    * 🚧
-
 """
 import crypto_utils as crypto
 
