@@ -5,7 +5,7 @@ This program simulates a simplified private blockchain owned and managed by a Ce
 
 ## Implementation structure
 
-Server - Central Authority (CA)
+**Server - Central Authority (CA)**
 - owns and manages the private blockchain
 - only entity that can append new blocks
 - maintains the blockchain records in an SQLite database
@@ -15,14 +15,14 @@ Server - Central Authority (CA)
 - runs the Flask app API to expose client endpoints
 - maintains a list of authorized SSH keys to manage clients’ API access
 
-Clients
+**Clients**
 - obtain access to the blockchain by providing the CA with their public SSH key
 - connect to the database API through an SSH tunnel and
 	- request the CA’s public key for validation operations 
 	- read blocks from the blockchain
 	- validate authenticity and integrity of blocks using the CA’s public key
 
-Database (SQLite)
+**Blockchain**
 - blocks contain fields for
 	- block header
 		- id
@@ -36,18 +36,18 @@ Database (SQLite)
 - each block contains the hash of its predecessor, creating a verifiable chain link
 - each block’s header hash is signed by the CA for proof of authenticity
 
-Flask
-- serves as a REST API
+**Flask**
+- serves a REST API
 - exposes endpoints for clients to
 	- fetch CA’s public RSA key
 	- read blocks
 	- validate blocks
 - listens on localhost port 5000 on the CA’s machine
 
-SSH
+**SSH**
 - serves as a local port forwading tool
 - creates a tunnel allowing clients to connect to the server’s localhost
-- the SSH keys act as acccess management to the Flask API
+- the SSH keys act as acccess management for the Flask API
 - offers automatic transport layer encryption
 
 
@@ -65,60 +65,60 @@ OpenSSH must be installed and configured on the server machine. For testing purp
   make sure you have
   - `PubkeyAuthentication yes`
   - `PasswordAuthentication no`
-  - `PermitRootLogin no` (optional).
+  - `PermitRootLogin no` (optional)
 2. Restart SSH with  
-  - `sudo systemctl restart ssh`.
+  - `sudo systemctl restart ssh`
 3. Ensure ~/.ssh/authorized_keys exists on the server machine  
-  - `mkdir ~/.ssh/authorized_keys`.
+  - `mkdir ~/.ssh/authorized_keys`
 3. Ensure correct permissions with
-  - `chmod 600 ~/.ssh/authorized_keys`.
+  - `chmod 600 ~/.ssh/authorized_keys`
 
 ### Add new client
 1. The client generates an SSH key pair:
   - `cd ~/.ssh`
   - `ssh-keygen -t rsa -b 4096 -f cti-blockchain`
 2. The public SSH key must be manually copied to `~/.ssh/authorized_keys` on the server machine. You may use whatever method to accomplish this. Below is an overview of how I did it. Note that for this method both the remote client and server machines must have public IP addresses.  
-  On my own machine (acting as an intermediary), I pulled the public key from the client to my CWD, then sent it to the server:
+  On my own machine (acting as an intermediary), I pulled the public key from the client to my `cwd`, then sent it to the server:
   - `scp <CLIENT_USER>@<CLIENT_IP>:/home/<CLIENT_USER>/.ssh/cti-blockchain.pub .`
-  - `scp cti-blockchain.pub <SERVER_USER>@<SERVER_IP>:/home/<SERVER_USER>/.ssh/client_ssh`
+  - `scp cti-blockchain.pub <SERVER_USER>@<SERVER_IP>:/home/<SERVER_USER>/.ssh/client_ssh`  
   On the server machine:
   - `cd ~/.ssh`
-  - `cat client_ssh >> authorized_keys`
+  - `cat client_ssh >> authorized_keys`  
   Make sure the client's key is appended to a new line in authorized_keys.
 
 ### Run the server program  
 Note: The server machine must have a public IP address to establish the SSH tunnel from client machines.
 1. Navigate to `/server` from the project root.
 2. Create a Python virtual environment with
-  - `python3 -m venv .venv`
+  - `python3 -m venv .venv`  
   and activate it with
-  - `source .venv/bin/activate`.
+  - `source .venv/bin/activate`
 3. Install the project requirements with
-  - `pip install -r requirements.txt`.
+  - `pip install -r requirements.txt`
 4. Run the server CLI program with
-  - `python3 server_cli.py`.  
+  - `python3 server_cli.py`  
 Now you can act as the CA, creating and managing the blockchain.
 
 ### Start the Flask API
 1. On the server machine, activate your virtual environment in `.../project_root/server` with
-  - `source .venv/bin/activate`.
+  - `source .venv/bin/activate`
 2. To expose the Flask endpoint to your clients, run
-  - `python3 server/app.py`.
+  - `python3 server/app.py`
 
 ### Run the client program
 Note: Follow all previous instructions before running the client program.
 On the client machine
 1. Establish the SSH tunnel to the server with
-  - `ssh -i ~/.ssh/cti-blockchain <SERVER_USER>@<SERVER_IP> -N -L 5000:127.0.0.1:5000`.
+  - `ssh -i ~/.ssh/cti-blockchain <SERVER_USER>@<SERVER_IP> -N -L 5000:127.0.0.1:5000`
 2. Open a new terminal window and navigate to `/client` from the project root.  
   You can test the SSH tunnel connection with
-  - `curl localhost:5000/` (make sure app.py is running on the server).
+  - `curl localhost:5000/` (make sure app.py is running on the server)
 3. Create a Python virtual environment with
-  - `python3 -m venv .venv`
+  - `python3 -m venv .venv`  
   and activate it with
-  - `source .venv/bin/activate`.
+  - `source .venv/bin/activate`
 4. Install the project requirements with
-  - `pip install -r requirements.txt`.
+  - `pip install -r requirements.txt`
 5. Run the client CLI program with
-  - `python3 client.py`.
+  - `python3 client.py`  
 You should now be able to access the API endpoints by performing client operations.
