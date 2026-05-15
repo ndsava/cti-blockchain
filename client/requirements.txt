@@ -1,11 +1,11 @@
 # Direct dependencies
-cryptography==47.0.0
-requests==2.33.1
+cryptography>=47.0.0
+requests>=2.33.1
 
 # Transitive dependencies
-certifi==2026.4.22
-cffi==2.0.0
-charset-normalizer==3.4.7
-idna==3.13
-pycparser==3.0
-urllib3==2.6.3
+certifi>=2026.4.22
+cffi>=2.0.0
+charset-normalizer>=3.4.7
+idna>=3.13
+pycparser>=3.0
+urllib3>=2.7.0
