@@ -115,7 +115,7 @@ def is_valid_ipv4(ip: str) -> bool:
         return False
 
 
-def _check_prerequisites(keys_check=True, db_check=True) -> bool:
+def check_prerequisites(keys_check=True, db_check=True) -> bool:
     """
      Verify that required resources (RSA keys, database) exist before operations.
 
@@ -245,7 +245,7 @@ def initialize_blockchain():
     if confirmation == 'y' or confirmation == "yes":
         print()
         # Make sure the RSA key pair exists
-        if not _check_prerequisites(True, False):
+        if not check_prerequisites(True, False):
             return
         print("* Initializing the blockchain database...")
         # Create /db if it doesn't exist
@@ -279,7 +279,7 @@ def add_new_block():
         The new block is signed by the CA's private key before insertion.
     """
     # Make sure the keys and db file exist
-    if not _check_prerequisites():
+    if not check_prerequisites():
         return
 
     payload = input("Please provide a list of IPv4 addresses separated by whitespaces: ")
@@ -334,20 +334,19 @@ def cmd_loop():
 
             case 'pull new':
                 # Make sure the database exists
-                if not _check_prerequisites(False, True):
+                if not check_prerequisites(False, True):
                     continue
                 blockchain.print_latest()
 
             case 'pull all':
                 # Make sure the database exists
-                if not _check_prerequisites(False, True):
+                if not check_prerequisites(False, True):
                     continue
                 blockchain.print_all()
 
             case 'validate':
                 # 🚧 TODO 🚧
                 print("🚧 WIP 🚧\n")
-                continue
 
             case 'exit':
                 print("Bye!")
