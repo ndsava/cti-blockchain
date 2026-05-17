@@ -83,7 +83,6 @@ def sign_block(current_hash: str) -> str | None:
         private_key = load_private_key(PRIVATE_KEY_PATH)
 
         if private_key is None:
-            print("Failed to load private key. Cannot sign block.")
             print(ABORT_MSG)
             return None
 
