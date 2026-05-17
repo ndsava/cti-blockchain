@@ -1,6 +1,6 @@
 # CTI Dissemination Blockchain
 
-This program simulates a simplified private blockchain owned and managed by a Central Authority (e.g. a company who produces Cyber Threat Information). The role of the blockchain is to securely and transparently disseminate CTI to authorized entities. Only the CA can append new blocks, by signing them with a private key. The blocks contain “malicious” IP addresses discovered by the CA. Authorized users may query the blockchain, reading blocks and verifying their integrity and validity with the CA's public key.
+This program simulates a simplified private blockchain owned and managed by a Central Authority (e.g. a company who produces Cyber Threat Information). The role of the blockchain is to securely and transparently disseminate CTI to authorized entities. Only the CA can append new blocks by signing them with a private key. The blocks contain “malicious” IP addresses discovered by the CA. Authorized users may query the blockchain, reading blocks and verifying their integrity and validity with the CA's public key.
 
 
 ## Implementation structure
@@ -29,7 +29,7 @@ This program simulates a simplified private blockchain owned and managed by a Ce
 		- timestamp
 		- payload hash
 		- previous block’s header hash
-	- hash of block header
+	- block header hash
 	- payload (list of IPv4 addresses)
 	- CA’s digital signature of block header hash
 - the blockchain is initialized with the genesis block (id = 0)
@@ -55,22 +55,21 @@ This program simulates a simplified private blockchain owned and managed by a Ce
 At least 2 networked machines are required (1 server, 1 client), preferably in separate networks. The server machine must have a public IP address. Please follow these instructions in order. 
 
   
-NOTE: This project has been developed and tested exclusively on Linux machines (Ubuntu and its derivatives). Other platforms are not supported. 
+NOTE: This project has been developed and tested exclusively on Linux machines (Ubuntu and its derivatives). Other platforms are not supported. Python version 3.10+ required.
 
 ### Set up the server (CA)
 **SSH config**  
 OpenSSH must be installed and configured on the server machine. For testing purposes, you may not want to harden the SSH daemon too much as not to lock yourself out of the server machine (if using a cloud VM etc.). However, the following configurations should still be set:
 
-1. In `/etc/ssh/sshd_config`
-  make sure you have
+1. In `/etc/ssh/sshd_config` on the server machine, make sure you have
   - `PubkeyAuthentication yes`
   - `PasswordAuthentication no`
   - `PermitRootLogin no` (optional)
 2. Restart SSH with  
   - `sudo systemctl restart ssh`
-3. Ensure ~/.ssh/authorized_keys exists on the server machine  
-  - `mkdir ~/.ssh/authorized_keys`
-3. Ensure correct permissions with
+3. Create ~/.ssh/authorized_keys on the server machine **if it doesn't exist**
+  - `touch ~/.ssh/authorized_keys`
+4. Ensure correct permissions with
   - `chmod 600 ~/.ssh/authorized_keys`
 
 ### Add new client
@@ -121,4 +120,19 @@ On the client machine
   - `pip install -r requirements.txt`
 5. Run the client CLI program with
   - `python3 client.py`  
-You should now be able to access the API endpoints by performing client operations.
+You should now be able to access the API endpoints from the CLI program.
+
+## Use of AI
+Proton Lumo v1.3 has been used extensively throughout this project.  
+**Design phase**  
+I validated my ideas with AI to make sure they were feasible in the project’s
+scope and time frame.  
+**Implementation**  
+AI was used to provide examples and snippets for various parts of the code, as well as
+provide rules and guidelines for good coding practices in Python. I used Lumo as a mentor
+to e.g. offer clues as to what exceptions certain lines of code may raise etc. AI was also
+used to analyze error messages while debugging. All module-level comments and function
+docstrings are AI-generated, but they have been manually reviewed and edited.  
+**Security testing**  
+I used AI to troubleshoot problems with setting up security tools, such as modifying the
+Snyk Security YAML configuration file in GitHub actions.
